@@ -1,7 +1,7 @@
 # Summary
 Tutorial on scala for comprehensions, futures, separation of business logic and process flow logic.
 
-This tutorial also demonstrates how to deal with failures from with blocking functions.
+This tutorial also demonstrates how to deal with failures from with blocking functions and compares that approach with returning ```Either``` from those functions.
 
 # Overview
 This tutorial highlights the use of _for comprehensions_ and ```Futures``` when needing to do a sequence of potentially blocking steps to complete some task.
@@ -15,9 +15,15 @@ In this tutorial we will be building shapes, specifically a 3-D rectangle and th
 
 To show how to handle _blocking_ steps, each step returns a ```Future``` and each step can fail.  For example we are only going to build circular tubes.
 
+There are 2 approaches to failure:
+1. throw an exception
+1. return a holder class such as ```Option```, ```Try``` or ```Either```
+
+This tutorial demonstrates throwing an exception in the ```v1``` packages and using an ```Either``` in the ```v2``` packages.
+
 
 # Organization
-There are 2 packages: model and service.
+In each version, there are 2 packages: model and service.
 
 ## Model
 The ```model``` package represents the shapes:
