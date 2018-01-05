@@ -19,10 +19,10 @@ There are 2 approaches to failure:
 1. throw an exception
 1. return a holder class such as ```Option```, ```Try``` or ```Either```
 
-This tutorial demonstrates throwing an exception in the ```v1``` packages and using an ```Either``` in the ```v2``` packages.
+This tutorial demonstrates throwing an exception in the ```exceptionbased``` packages and using an ```Either``` in the ```eitherbased``` packages.
 
-
-# Organization
+/
+# Organization. 
 In each version, there are 2 packages: model and service.
 
 ## Model
