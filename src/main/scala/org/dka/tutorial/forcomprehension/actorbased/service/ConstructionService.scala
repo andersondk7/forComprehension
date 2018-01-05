@@ -1,5 +1,6 @@
 package org.dka.tutorial.forcomprehension.actorbased.service
 
+import akka.actor.ActorSystem
 import org.dka.tutorial.forcomprehension.actorbased.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -51,7 +52,11 @@ class ConstructionService(squareBuilder: SquareBuilder,
       _ <- sf // just to show that we can wait for the square, but we don't do anything with the errors
       rectangle <- rf
       box <- rectangle.fold(e => Future(Left(e)), r => boxBuilder.buildBox(r, height))
-      tube <- box.fold(e => Future(Left(e)), b => tubeBuilder.buildTube(b))
-    } yield tube
+      tube <- box.fold(e => Future(Left(e)), b => {
+        tubeBuilder.buildTube(b)
+      })
+    } yield {
+      tube
+    }
   }
 }

@@ -68,7 +68,7 @@ class BoxBuilderSpec extends FunSpec with Matchers {
   describe("2. timeoutBoxBuilder") {
     it("2.1 should handle actor takes longer than the service is willing to wait") {
       val serviceWait = awaitDelay / 2
-      val buildDuration = serviceWait * 2
+      val buildDuration = awaitDelay * 2
       val boxBuilder: BoxBuilder = new BoxBuilderImpl(invalidHeight, serviceWait, buildDuration, shouldRespond = true)
 
       // since this is where we are waiting...

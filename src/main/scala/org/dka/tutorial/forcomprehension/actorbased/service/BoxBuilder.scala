@@ -1,12 +1,12 @@
 package org.dka.tutorial.forcomprehension.actorbased.service
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Scheduler}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern._
+import org.dka.tutorial.forcomprehension.actorbased.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, TimeoutException}
 import scala.concurrent.duration.FiniteDuration
-import org.dka.tutorial.forcomprehension.actorbased.model._
+import scala.concurrent.{Future, TimeoutException}
 
 /**
   * Represents the service that builds 3-D [[Box]]es
@@ -29,7 +29,7 @@ trait BoxBuilder {
   * Normally this would be in a separate file.
   *
   * @param invalidHeight when build a box of this height, return [[Left[BoxHeightError]]]
-  * @param serviceWait how long this service will wait for the internal actors to complete
+  * @param serviceWait   how long this service will wait for the internal actors to complete
   * @param buildDuration how long the internal actor takes to complete normally
   * @param shouldRespond indicates if the internal actor should respond to the service upon completion
   */
@@ -37,6 +37,7 @@ class BoxBuilderImpl(invalidHeight: Int,
                      serviceWait: FiniteDuration,
                      buildDuration: FiniteDuration,
                      shouldRespond: Boolean = true)(implicit actorSystem: ActorSystem) extends BoxBuilder {
+
   import BoxBuilderActor._
 
   /**
@@ -65,17 +66,18 @@ class BoxBuilderImpl(invalidHeight: Int,
     */
   override def buildBox(rectangle: Rectangle, height: Int): Future[BuildResult[Box]] = {
     val builder = actorSystem.actorOf(BoxBuilderActor.props(invalidHeight, buildDuration))
-    val result = (builder ? Build(rectangle, height, shouldRespond))(serviceWait)
+    // since we are waiting here...
+    //  we must handle timeouts, since the timeout is from the ask method, it will
+    //    be an akka.pattern.AskTimeoutException rather than a scala.concurrent.TimeoutException
+    val result = (builder ? Build(rectangle, height, shouldRespond)) (serviceWait)
       .mapTo[BuildResult[Box]]
       .recover {
         case to: AskTimeoutException =>
           actorSystem.log.warning(s"caught $to")
           Left(TimeoutError(to))
-        case to: TimeoutException => // should not happen!!!
-          actorSystem.log.warning(s"generic TimeoutException, should have been an AskTimeoutException")
-          Left(TimeoutError(to))
       }
       .map(r => { // stopping of actor MUST happen after work has been completed
+        actorSystem.log.info(s"stopping box builder")
         actorSystem.stop(builder) // since the BoxBuilderActor does NOT self terminate
         r
       })
@@ -85,13 +87,17 @@ class BoxBuilderImpl(invalidHeight: Int,
 
 /**
   * Actor responsible for building a [[Box]]
+  *
+  * this actor DOES NOT self terminate, the creator must terminate the created instance
+  *
   * @param invalidHeight [[Box]]es of this height are considered invalid and an [[BoxHeigthError]] will be thrown
   * @param buildDuration how long it takes the actor to build the [[Box]]
   */
 class BoxBuilderActor(invalidHeight: Int, buildDuration: FiniteDuration) extends Actor with ActorLogging {
+
   import BoxBuilderActor._
 
-  override def aroundPostStop(): Unit = log.info("builder stopped")
+  override def aroundPostStop(): Unit = log.info("box builder stopped")
 
   override def receive: Receive = {
 
@@ -104,16 +110,19 @@ class BoxBuilderActor(invalidHeight: Int, buildDuration: FiniteDuration) extends
 
     case Respond(result, originalSender, shouldRespond) =>
       if (shouldRespond) originalSender ! result
-//      context.stop(self)  // required so that actor created by service gets cleaned up
+    //      context.stop(self)  // required so that actor created by service gets cleaned up
   }
 
 }
 
 object BoxBuilderActor {
+
   // messages
   case class Build(rectangle: Rectangle, height: Int, shouldRespond: Boolean = true)
+
   case class Respond(result: BuildResult[Box], originalSender: ActorRef, shouldRespond: Boolean)
+
   // constructor
-  def props(invalidHeight: Int, calculationDelay: FiniteDuration) = Props(classOf[BoxBuilderActor], invalidHeight, calculationDelay)
+  def props(invalidHeight: Int, buildDuration: FiniteDuration) = Props(classOf[BoxBuilderActor], invalidHeight, buildDuration)
 }
 
