@@ -54,6 +54,10 @@ There are 2 variations of the construction services.
 One takes the all of the builder classes in the constructor and calls the corresponding ```buildXYZ``` method.
 The other takes the specific ```buildXYZ``` functions and calls those.
 
+# Timeouts
+Since the ```Services``` all return ```Futures```, special attention needs to be paid to the issue of ```java.util.concurrent.TimeoutException``` (yes scala reuses that exception).
+
+The _for comphrehension_ per se does not throw / catch ```TimeoutException```, the exception needs to be handled where the result of the future is used.  In _v2_ version of the code, this is in the ```Spec``` tests.
 # Demonstration
 To see how the ```Construction``` classes work there are unit tests ```ConstructionServiceSpec``` and ```ConstructionFunctionServiceSpec```.  These tests also demonstrate how to handle and map failed futures.
 

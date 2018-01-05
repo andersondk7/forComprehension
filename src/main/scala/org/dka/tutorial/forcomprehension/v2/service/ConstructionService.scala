@@ -3,7 +3,7 @@ package org.dka.tutorial.forcomprehension.v2.service
 import org.dka.tutorial.forcomprehension.v2.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Future, TimeoutException}
 
 /**
   * Represents the business logic of building shapes
@@ -43,6 +43,10 @@ class ConstructionService(squareBuilder: SquareBuilder,
   def buildTube(width: Int, length: Int, height: Int): Future[BuildResult[Tube]] = {
     val sf = squareBuilder.buildSquare(width)
     val rf = rectangleBuilder.buildRectangle(width, length)
+
+    // the for comprehension will NEVER time out, it will take as long as the individual steps take
+    // timeout errors MUST be handled in the client
+
     for {
       _ <- sf // just to show that we can wait for the square, but we don't do anything with the errors
       rectangle <- rf

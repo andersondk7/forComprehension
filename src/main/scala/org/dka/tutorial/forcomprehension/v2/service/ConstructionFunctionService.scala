@@ -47,6 +47,10 @@ class ConstructionFunctionService(buildSquare: Int => Future[BuildResult[Square]
   def buildTube(width: Int, length: Int, height: Int): Future[BuildResult[Tube]] = {
     val sf = buildSquare(width)
     val rf = buildRectangle(width, length)
+
+    // the for comprehension will NEVER time out, it will take as long as the individual steps take
+    // timeout errors MUST be handled in the client
+
     for {
       _ <- sf // just to show that we can wait for the square, but we don't do anything with any errors!!!
       rectangle <- rf

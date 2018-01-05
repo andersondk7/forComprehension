@@ -1,5 +1,8 @@
 package org.dka.tutorial.forcomprehension.v2.model
 
+import scala.concurrent.TimeoutException
+import scala.concurrent.duration.FiniteDuration
+
 
 /**
   * Represents errors generated during construction of shapes
@@ -30,13 +33,16 @@ case class BoxHeigthError(height: Int) extends ConstructionError {
 
 case class TubeNotRoundError(width: Int, length: Int) extends ConstructionError {
   override def reason: String = s"width: $width was not equal to length $length"
-
   override def code: ConstructionErrorCategory = BadInput
 }
 
 case class TubeConstructionError(radius: Int) extends ConstructionError {
   override def reason: String = s"radius: $radius was not valid"
-
   override def code: ConstructionErrorCategory = BadInput
+}
+
+case class TimeoutError(te: TimeoutException) extends ConstructionError {
+  override def reason: String = te.getMessage
+  override val code: ConstructionErrorCategory = BuilderError
 
 }

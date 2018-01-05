@@ -1,9 +1,12 @@
 package org.dka.tutorial.forcomprehension.v2.service
 
-import org.dka.tutorial.forcomprehension.v2.model.{Box, BoxHeigthError, Rectangle}
+import akka.actor.Scheduler
+import org.dka.tutorial.forcomprehension.v2.model.{Box, BoxHeigthError, Rectangle, TimeoutError}
+import akka.pattern._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Represents the service that builds 3-D [[Box]]es
@@ -31,5 +34,22 @@ class BoxBuilderImpl(invalidHeight: Int) extends BoxBuilder {
   override def buildBox(rectangle: Rectangle, height: Int): Future[BuildResult[Box]] = Future {
     if (height == invalidHeight) Left(BoxHeigthError(height))
     else Right(Box(rectangle.length, rectangle.width, height))
+  }
+}
+
+/**
+  * Implementation of a [[BoxBuilder]] with timeout
+  *
+  * Normally this would be in a separate file.
+  *
+  * @param invalidHeight when build a box of this height, return [[Left[BoxHeightError]]]
+  * @param delay how long the building should take
+  */
+class BoxBuilderDelayImpl(invalidHeight: Int, delay: FiniteDuration)(implicit scheduler: Scheduler) extends BoxBuilder {
+  override def buildBox(rectangle: Rectangle, height: Int): Future[BuildResult[Box]] = {
+    after(delay, scheduler) { Future {
+      if (height == invalidHeight) Left(BoxHeigthError(height))
+      else Right(Box(rectangle.length, rectangle.width, height))
+    }}
   }
 }
